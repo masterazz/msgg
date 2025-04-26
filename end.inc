@@ -1,7 +1,7 @@
-<p>
-<div align="center">
-#
-#put your scripts heare
-#
-</div>
-</p>
+<!--
+Add your custom scripts or HTML here.
+Example:
+<script>
+    console.log("Custom script loaded");
+</script>
+-->
