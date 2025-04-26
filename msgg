@@ -1,0 +1,118 @@
+#!/bin/bash
+#################################################
+# static gallery generator                      #
+# mailto: master@masteraz.ru                    #
+#################################################
+
+#1 - current file
+#2 - next file
+#3 - previous file
+generate_prev()
+{
+echo "<html>" > prev/$1.html
+echo "<body>" >> prev/$1.html
+cat /volume1/bin/head.inc >> prev/$1.html
+echo "<div align=\"center\">" >> prev/$1.html
+echo "<b>$gname</b><br>" >> prev/$1.html
+echo "<a href=\"../$1\"><b>ORIGINAL SIZE</b></a><br>" >> prev/$1.html
+echo "<a href=\"$2.html\"><img src=\"pr$1\"></a><br>" >> prev/$1.html
+echo "<img src=\"pr$2\" width=0 height=0><br>" >> prev/$1.html
+echo "<table><tbody><td align=\"left\">" >> prev/$1.html
+echo "<a href=\"$3.html\"><b>PREV</b></a></td><td align=\"right\">" >> prev/$1.html
+echo "<a href=\"$2.html\"><b>NEXT</b></a></td></tbody></table><br>" >> prev/$1.html
+echo "<a href=\"../index.html\"><b>GALLERY</b></a><br>" >> prev/$1.html
+echo "</div>" >> prev/$1.html
+cat /volume1/bin/end.inc >> prev/$1.html
+echo "</body>" >> prev/$1.html
+echo "</html>" >> prev/$1.html
+}
+
+generate_index_entry()
+{
+    echo "<td>" >> index.html
+    echo "<a href=\"prev/$1.html\"><img src=\"thumb/th$1\"></a>" >> index.html
+    echo "</td>" >> index.html
+}
+
+if [ $# = 0 ]
+then
+    echo "usage: msgg <dirname>"
+    exit
+fi
+
+cd "$1"
+
+if !(test -d thumb)
+then
+    mkdir thumb
+fi
+
+if !(test -d prev)
+then
+    mkdir prev
+fi
+
+#generating header
+
+gname=$1
+coln=0
+prevn=
+pprevn=
+first=
+second=
+start=0
+
+echo "<html>" > index.html
+echo "<body>" >> index.html
+cat /volume1/bin/head.inc >> index.html
+echo "<div align=\"center\">" >> index.html
+echo "<b>$gname</b><br>" >> index.html
+echo "<table>" >> index.html
+echo "<tbody>" >> index.html
+echo "<tr>" >> index.html
+
+
+for file in *.[Jj][Pp][Gg]
+do
+    echo "found $file"
+    echo "generating thumbnail"
+    convert $file -resize "150x150>" thumb/th$file
+    echo "generating preview"
+    convert $file -resize "800x800>" prev/pr$file
+    echo "generating html"
+    generate_index_entry $file
+    if [ $start = 0 ]
+    then
+	first=$file
+	start=1
+    elif [ $start = 1 ]
+    then
+	second=$file
+	start=2
+    elif [ $start = 2 ]
+    then
+        generate_prev $prevn $file $pprevn
+    fi
+    pprevn=$prevn
+    prevn=$file
+    let "coln += 1"
+    if [ $coln = 5 ]
+    then
+	echo "</tr>" >> index.html
+	echo "<tr>" >> index.html
+	coln=0
+    fi
+done
+
+generate_prev $file $first $pprevn
+generate_prev $first $second $file
+
+#generate end
+
+echo "</tr>" >> index.html
+echo "</tbody>" >> index.html
+echo "</table>" >> index.html
+echo "</div>" >> index.html
+cat /volume1/bin/end.inc >> index.html
+echo "</body>" >> index.html
+echo "</html>" >> index.html
